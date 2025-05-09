@@ -1,19 +1,40 @@
-"use client"
+"use client";
 
-import { useEditor } from "./editor-context"
-import type { ComponentType, SocialLink, SocialPlatform, MergeTag } from "./types"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import { Slider } from "@/components/ui/slider"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { Switch } from "@/components/ui/switch"
-import { Button } from "@/components/ui/button"
-import RichTextEditor from "./rich-text-editor"
-import MergeTagSelector from "./merge-tag-selector"
-import { Facebook, Twitter, Instagram, Linkedin, Youtube, Github, Plus, Tag, Trash2 } from "lucide-react"
-import { useState } from "react"
-import { v4 as uuidv4 } from "uuid"
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Slider } from "@/components/ui/slider";
+import { Switch } from "@/components/ui/switch";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import {
+  Facebook,
+  Github,
+  Instagram,
+  Linkedin,
+  Plus,
+  Tag,
+  Trash2,
+  Twitter,
+  Youtube,
+} from "lucide-react";
+import { useState } from "react";
+import { v4 as uuidv4 } from "uuid";
+import { useEditor } from "./editor-context";
+import MergeTagSelector from "./merge-tag-selector";
+import RichTextEditor from "./rich-text-editor";
+import type {
+  ComponentType,
+  MergeTag,
+  SocialLink,
+  SocialPlatform,
+} from "./types";
 
 export default function PropertiesPanel() {
   const {
@@ -24,24 +45,35 @@ export default function PropertiesPanel() {
     addMergeTag,
     removeMergeTag,
     updateMergeTag,
-  } = useEditor()
-  const [newTagName, setNewTagName] = useState("")
-  const [newTagValue, setNewTagValue] = useState("")
+  } = useEditor();
+  const [newTagName, setNewTagName] = useState("");
+  const [newTagValue, setNewTagValue] = useState("");
 
   // Find the selected component
-  const selectedComponent = selectedComponentId ? findComponentById(selectedComponentId) : null
+  const selectedComponent = selectedComponentId
+    ? findComponentById(selectedComponentId)
+    : null;
 
   if (!selectedComponent) {
     return (
       <div className="w-64 bg-white border-l border-gray-200 p-4 overflow-y-auto">
-        <h2 className="text-lg font-semibold mb-4 text-[#0F172A]">Properties</h2>
-        <p className="text-sm text-gray-500">Select a component to edit its properties</p>
+        <h2 className="text-lg font-semibold mb-4 text-[#0F172A]">
+          Properties
+        </h2>
+        <p className="text-sm text-gray-500">
+          Select a component to edit its properties
+        </p>
 
         <div className="mt-8">
-          <h3 className="text-md font-semibold mb-2 text-[#0F172A]">Merge Tags</h3>
+          <h3 className="text-md font-semibold mb-2 text-[#0F172A]">
+            Merge Tags
+          </h3>
           <div className="space-y-2">
             {template.mergeTags?.map((tag) => (
-              <div key={tag.id} className="flex items-center justify-between p-2 border rounded-md">
+              <div
+                key={tag.id}
+                className="flex items-center justify-between p-2 border rounded-md"
+              >
                 <div className="flex items-center">
                   <Tag size={14} className="mr-2 text-gray-500" />
                   <span className="text-sm">{tag.name}</span>
@@ -49,10 +81,17 @@ export default function PropertiesPanel() {
                 <div className="flex items-center space-x-2">
                   <Input
                     value={tag.value}
-                    onChange={(e) => updateMergeTag(tag.id, { value: e.target.value })}
+                    onChange={(e) =>
+                      updateMergeTag(tag.id, { value: e.target.value })
+                    }
                     className="w-32 h-8 text-xs"
                   />
-                  <Button variant="ghost" size="icon" onClick={() => removeMergeTag(tag.id)} className="h-6 w-6">
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={() => removeMergeTag(tag.id)}
+                    className="h-6 w-6"
+                  >
                     <Trash2 size={14} />
                   </Button>
                 </div>
@@ -77,9 +116,13 @@ export default function PropertiesPanel() {
                 size="sm"
                 onClick={() => {
                   if (newTagName && newTagValue) {
-                    addMergeTag({ id: uuidv4(), name: newTagName, value: newTagValue })
-                    setNewTagName("")
-                    setNewTagValue("")
+                    addMergeTag({
+                      id: uuidv4(),
+                      name: newTagName,
+                      value: newTagValue,
+                    });
+                    setNewTagName("");
+                    setNewTagValue("");
                   }
                 }}
                 disabled={!newTagName || !newTagValue}
@@ -90,27 +133,32 @@ export default function PropertiesPanel() {
           </div>
         </div>
       </div>
-    )
+    );
   }
 
   const handleChange = (key: string, value: any) => {
-    updateComponent(selectedComponentId!, { [key]: value })
-  }
+    updateComponent(selectedComponentId!, { [key]: value });
+  };
 
   return (
     <div className="w-64 bg-white border-l border-gray-200 p-4 overflow-y-auto">
       <h2 className="text-lg font-semibold mb-4 text-[#0F172A]">Properties</h2>
 
-      {renderPropertiesForm(selectedComponent.type, selectedComponent.props, handleChange, template.mergeTags)}
+      {renderPropertiesForm(
+        selectedComponent.type,
+        selectedComponent.props,
+        handleChange,
+        template.mergeTags
+      )}
     </div>
-  )
+  );
 }
 
 function renderPropertiesForm(
   type: ComponentType,
   props: any,
   onChange: (key: string, value: any) => void,
-  mergeTags?: MergeTag[],
+  mergeTags?: MergeTag[]
 ) {
   // Common position controls for all components
   const positionControls = (
@@ -124,7 +172,10 @@ function renderPropertiesForm(
       <TabsContent value="position" className="space-y-4">
         <div>
           <Label htmlFor="position">Position</Label>
-          <Select value={props.position || "static"} onValueChange={(value) => onChange("position", value)}>
+          <Select
+            value={props.position || "static"}
+            onValueChange={(value) => onChange("position", value)}
+          >
             <SelectTrigger>
               <SelectValue placeholder="Select position" />
             </SelectTrigger>
@@ -141,7 +192,12 @@ function renderPropertiesForm(
             <div className="grid grid-cols-2 gap-2">
               <div>
                 <Label htmlFor="top">Top</Label>
-                <Input id="top" type="text" value={props.top || ""} onChange={(e) => onChange("top", e.target.value)} />
+                <Input
+                  id="top"
+                  type="text"
+                  value={props.top || ""}
+                  onChange={(e) => onChange("top", e.target.value)}
+                />
               </div>
               <div>
                 <Label htmlFor="left">Left</Label>
@@ -184,7 +240,7 @@ function renderPropertiesForm(
         )}
       </TabsContent>
     </Tabs>
-  )
+  );
 
   // Merge tag selector for text-based components
   const mergeTagSelector =
@@ -195,26 +251,29 @@ function renderPropertiesForm(
           onSelect={(tagValue) => {
             // Insert the tag name into the content
             if (type === "text" || type === "header") {
-              const currentContent = props.content || ""
-              onChange("content", `${currentContent} ${tagValue} `)
+              const currentContent = props.content || "";
+              onChange("content", `${currentContent} ${tagValue} `);
 
               // Also update rich content if available
               if (props.richContent) {
-                const richContent = props.richContent
+                const richContent = props.richContent;
                 // Simple insertion at the end for now
-                onChange("richContent", richContent.replace(/<\/p>$/, ` ${tagValue} </p>`))
+                onChange(
+                  "richContent",
+                  richContent.replace(/<\/p>$/, ` ${tagValue} </p>`)
+                );
               }
             } else if (type === "button") {
-              const currentText = props.text || ""
-              onChange("text", `${currentText} ${tagValue} `)
+              const currentText = props.text || "";
+              onChange("text", `${currentText} ${tagValue} `);
             } else if (type === "unsubscribe") {
-              const currentText = props.unsubscribeText || ""
-              onChange("unsubscribeText", `${currentText} ${tagValue} `)
+              const currentText = props.unsubscribeText || "";
+              onChange("unsubscribeText", `${currentText} ${tagValue} `);
             }
           }}
         />
       </div>
-    ) : null
+    ) : null;
 
   switch (type) {
     case "text":
@@ -247,11 +306,17 @@ function renderPropertiesForm(
                 <SelectItem value="Arial, sans-serif">Arial</SelectItem>
                 <SelectItem value="Helvetica, sans-serif">Helvetica</SelectItem>
                 <SelectItem value="Georgia, serif">Georgia</SelectItem>
-                <SelectItem value="Times New Roman, serif">Times New Roman</SelectItem>
-                <SelectItem value="Courier New, monospace">Courier New</SelectItem>
+                <SelectItem value="Times New Roman, serif">
+                  Times New Roman
+                </SelectItem>
+                <SelectItem value="Courier New, monospace">
+                  Courier New
+                </SelectItem>
                 <SelectItem value="Verdana, sans-serif">Verdana</SelectItem>
                 <SelectItem value="Tahoma, sans-serif">Tahoma</SelectItem>
-                <SelectItem value="Trebuchet MS, sans-serif">Trebuchet MS</SelectItem>
+                <SelectItem value="Trebuchet MS, sans-serif">
+                  Trebuchet MS
+                </SelectItem>
               </SelectContent>
             </Select>
           </div>
@@ -290,7 +355,10 @@ function renderPropertiesForm(
 
           <div>
             <Label htmlFor="textAlign">Text Align</Label>
-            <Select value={props.textAlign} onValueChange={(value) => onChange("textAlign", value)}>
+            <Select
+              value={props.textAlign}
+              onValueChange={(value) => onChange("textAlign", value)}
+            >
               <SelectTrigger>
                 <SelectValue placeholder="Select alignment" />
               </SelectTrigger>
@@ -318,7 +386,7 @@ function renderPropertiesForm(
 
           {positionControls}
         </div>
-      )
+      );
 
     case "header":
       return (
@@ -328,7 +396,12 @@ function renderPropertiesForm(
           <div>
             <Label htmlFor="richContent">Header Text</Label>
             <RichTextEditor
-              content={props.richContent || `<h${props.headerLevel || 2}>Header Text</h${props.headerLevel || 2}>`}
+              content={
+                props.richContent ||
+                `<h${props.headerLevel || 2}>Header Text</h${
+                  props.headerLevel || 2
+                }>`
+              }
               onChange={(html) => onChange("richContent", html)}
               textColor={props.color}
               fontSize={props.fontSize}
@@ -370,11 +443,17 @@ function renderPropertiesForm(
                 <SelectItem value="Arial, sans-serif">Arial</SelectItem>
                 <SelectItem value="Helvetica, sans-serif">Helvetica</SelectItem>
                 <SelectItem value="Georgia, serif">Georgia</SelectItem>
-                <SelectItem value="Times New Roman, serif">Times New Roman</SelectItem>
-                <SelectItem value="Courier New, monospace">Courier New</SelectItem>
+                <SelectItem value="Times New Roman, serif">
+                  Times New Roman
+                </SelectItem>
+                <SelectItem value="Courier New, monospace">
+                  Courier New
+                </SelectItem>
                 <SelectItem value="Verdana, sans-serif">Verdana</SelectItem>
                 <SelectItem value="Tahoma, sans-serif">Tahoma</SelectItem>
-                <SelectItem value="Trebuchet MS, sans-serif">Trebuchet MS</SelectItem>
+                <SelectItem value="Trebuchet MS, sans-serif">
+                  Trebuchet MS
+                </SelectItem>
               </SelectContent>
             </Select>
           </div>
@@ -413,7 +492,10 @@ function renderPropertiesForm(
 
           <div>
             <Label htmlFor="textAlign">Text Align</Label>
-            <Select value={props.textAlign} onValueChange={(value) => onChange("textAlign", value)}>
+            <Select
+              value={props.textAlign}
+              onValueChange={(value) => onChange("textAlign", value)}
+            >
               <SelectTrigger>
                 <SelectValue placeholder="Select alignment" />
               </SelectTrigger>
@@ -440,29 +522,49 @@ function renderPropertiesForm(
 
           {positionControls}
         </div>
-      )
+      );
 
     case "image":
       return (
         <div className="space-y-4">
           <div>
             <Label htmlFor="src">Image URL</Label>
-            <Input id="src" type="text" value={props.src} onChange={(e) => onChange("src", e.target.value)} />
+            <Input
+              id="src"
+              type="text"
+              value={props.src}
+              onChange={(e) => onChange("src", e.target.value)}
+            />
           </div>
 
           <div>
             <Label htmlFor="alt">Alt Text</Label>
-            <Input id="alt" type="text" value={props.alt} onChange={(e) => onChange("alt", e.target.value)} />
+            <Input
+              id="alt"
+              type="text"
+              value={props.alt}
+              onChange={(e) => onChange("alt", e.target.value)}
+            />
           </div>
 
           <div>
             <Label htmlFor="width">Width</Label>
-            <Input id="width" type="text" value={props.width} onChange={(e) => onChange("width", e.target.value)} />
+            <Input
+              id="width"
+              type="text"
+              value={props.width}
+              onChange={(e) => onChange("width", e.target.value)}
+            />
           </div>
 
           <div>
             <Label htmlFor="height">Height</Label>
-            <Input id="height" type="text" value={props.height} onChange={(e) => onChange("height", e.target.value)} />
+            <Input
+              id="height"
+              type="text"
+              value={props.height}
+              onChange={(e) => onChange("height", e.target.value)}
+            />
           </div>
 
           <div>
@@ -480,7 +582,7 @@ function renderPropertiesForm(
 
           {positionControls}
         </div>
-      )
+      );
 
     case "button":
       return (
@@ -502,17 +604,30 @@ function renderPropertiesForm(
 
             <div>
               <Label htmlFor="text">Button Text</Label>
-              <Input id="text" type="text" value={props.text} onChange={(e) => onChange("text", e.target.value)} />
+              <Input
+                id="text"
+                type="text"
+                value={props.text}
+                onChange={(e) => onChange("text", e.target.value)}
+              />
             </div>
 
             <div>
               <Label htmlFor="url">URL</Label>
-              <Input id="url" type="text" value={props.url} onChange={(e) => onChange("url", e.target.value)} />
+              <Input
+                id="url"
+                type="text"
+                value={props.url}
+                onChange={(e) => onChange("url", e.target.value)}
+              />
             </div>
 
             <div>
               <Label htmlFor="textAlign">Alignment</Label>
-              <Select value={props.textAlign || "center"} onValueChange={(value) => onChange("textAlign", value)}>
+              <Select
+                value={props.textAlign || "center"}
+                onValueChange={(value) => onChange("textAlign", value)}
+              >
                 <SelectTrigger>
                   <SelectValue placeholder="Select alignment" />
                 </SelectTrigger>
@@ -578,7 +693,9 @@ function renderPropertiesForm(
             </div>
 
             <div>
-              <Label htmlFor="borderRadius">Border Radius ({props.borderRadius}px)</Label>
+              <Label htmlFor="borderRadius">
+                Border Radius ({props.borderRadius}px)
+              </Label>
               <Slider
                 id="borderRadius"
                 value={[props.borderRadius]}
@@ -594,7 +711,10 @@ function renderPropertiesForm(
           <TabsContent value="position" className="space-y-4">
             <div>
               <Label htmlFor="position">Position</Label>
-              <Select value={props.position || "static"} onValueChange={(value) => onChange("position", value)}>
+              <Select
+                value={props.position || "static"}
+                onValueChange={(value) => onChange("position", value)}
+              >
                 <SelectTrigger>
                   <SelectValue placeholder="Select position" />
                 </SelectTrigger>
@@ -659,7 +779,7 @@ function renderPropertiesForm(
             )}
           </TabsContent>
         </Tabs>
-      )
+      );
 
     case "container":
       return (
@@ -698,7 +818,12 @@ function renderPropertiesForm(
 
           <div>
             <Label htmlFor="width">Width</Label>
-            <Input id="width" type="text" value={props.width} onChange={(e) => onChange("width", e.target.value)} />
+            <Input
+              id="width"
+              type="text"
+              value={props.width}
+              onChange={(e) => onChange("width", e.target.value)}
+            />
           </div>
 
           <div>
@@ -714,7 +839,7 @@ function renderPropertiesForm(
 
           {positionControls}
         </div>
-      )
+      );
 
     case "divider":
       return (
@@ -766,7 +891,7 @@ function renderPropertiesForm(
 
           {positionControls}
         </div>
-      )
+      );
 
     case "columns":
       return (
@@ -788,7 +913,9 @@ function renderPropertiesForm(
               <Label htmlFor="columns">Number of Columns</Label>
               <Select
                 value={props.columns.toString()}
-                onValueChange={(value) => onChange("columns", Number.parseInt(value))}
+                onValueChange={(value) =>
+                  onChange("columns", Number.parseInt(value))
+                }
               >
                 <SelectTrigger>
                   <SelectValue placeholder="Select columns" />
@@ -803,7 +930,9 @@ function renderPropertiesForm(
             </div>
 
             <div>
-              <Label htmlFor="columnGap">Column Gap ({props.columnGap}px)</Label>
+              <Label htmlFor="columnGap">
+                Column Gap ({props.columnGap}px)
+              </Label>
               <Slider
                 id="columnGap"
                 value={[props.columnGap]}
@@ -891,16 +1020,19 @@ function renderPropertiesForm(
               <Switch
                 id="stackOnMobile"
                 checked={props.stackOnMobile}
-                onCheckedChange={(checked) => onChange("stackOnMobile", checked)}
+                onCheckedChange={(checked) =>
+                  onChange("stackOnMobile", checked)
+                }
               />
               <Label htmlFor="stackOnMobile">Stack columns on mobile</Label>
             </div>
             <p className="text-xs text-gray-500 mt-1">
-              When enabled, columns will stack vertically on mobile devices for better readability.
+              When enabled, columns will stack vertically on mobile devices for
+              better readability.
             </p>
           </TabsContent>
         </Tabs>
-      )
+      );
 
     case "spacer":
       return (
@@ -920,7 +1052,7 @@ function renderPropertiesForm(
 
           {positionControls}
         </div>
-      )
+      );
 
     case "social":
       return (
@@ -939,28 +1071,33 @@ function renderPropertiesForm(
 
           <TabsContent value="platforms" className="space-y-4">
             {props.socialLinks?.map((link: SocialLink, index: number) => (
-              <div key={index} className="flex items-center justify-between p-2 border rounded-md">
+              <div
+                key={index}
+                className="flex items-center justify-between p-2 border rounded-md"
+              >
                 <div className="flex items-center space-x-2">
                   {getSocialIcon(link.platform)}
-                  <span className="text-sm">{capitalizeFirstLetter(link.platform)}</span>
+                  <span className="text-sm">
+                    {capitalizeFirstLetter(link.platform)}
+                  </span>
                 </div>
                 <div className="flex items-center space-x-2">
                   <Switch
                     id={`social-${link.platform}`}
                     checked={link.enabled}
                     onCheckedChange={(checked) => {
-                      const newLinks = [...props.socialLinks]
-                      newLinks[index].enabled = checked
-                      onChange("socialLinks", newLinks)
+                      const newLinks = [...props.socialLinks];
+                      newLinks[index].enabled = checked;
+                      onChange("socialLinks", newLinks);
                     }}
                   />
                   <Input
                     type="text"
                     value={link.url}
                     onChange={(e) => {
-                      const newLinks = [...props.socialLinks]
-                      newLinks[index].url = e.target.value
-                      onChange("socialLinks", newLinks)
+                      const newLinks = [...props.socialLinks];
+                      newLinks[index].url = e.target.value;
+                      onChange("socialLinks", newLinks);
                     }}
                     className="w-32 h-8 text-xs"
                     disabled={!link.enabled}
@@ -972,7 +1109,9 @@ function renderPropertiesForm(
 
           <TabsContent value="style" className="space-y-4">
             <div>
-              <Label htmlFor="socialSize">Icon Size ({props.socialSize}px)</Label>
+              <Label htmlFor="socialSize">
+                Icon Size ({props.socialSize}px)
+              </Label>
               <Slider
                 id="socialSize"
                 value={[props.socialSize]}
@@ -985,7 +1124,9 @@ function renderPropertiesForm(
             </div>
 
             <div>
-              <Label htmlFor="socialSpacing">Icon Spacing ({props.socialSpacing}px)</Label>
+              <Label htmlFor="socialSpacing">
+                Icon Spacing ({props.socialSpacing}px)
+              </Label>
               <Slider
                 id="socialSpacing"
                 value={[props.socialSpacing]}
@@ -1024,12 +1165,16 @@ function renderPropertiesForm(
                   type="color"
                   className="w-10 h-10 p-1"
                   value={props.socialBackgroundColor}
-                  onChange={(e) => onChange("socialBackgroundColor", e.target.value)}
+                  onChange={(e) =>
+                    onChange("socialBackgroundColor", e.target.value)
+                  }
                 />
                 <Input
                   type="text"
                   value={props.socialBackgroundColor}
-                  onChange={(e) => onChange("socialBackgroundColor", e.target.value)}
+                  onChange={(e) =>
+                    onChange("socialBackgroundColor", e.target.value)
+                  }
                   className="flex-1"
                 />
               </div>
@@ -1037,7 +1182,10 @@ function renderPropertiesForm(
 
             <div>
               <Label htmlFor="socialShape">Icon Shape</Label>
-              <Select value={props.socialShape} onValueChange={(value) => onChange("socialShape", value)}>
+              <Select
+                value={props.socialShape}
+                onValueChange={(value) => onChange("socialShape", value)}
+              >
                 <SelectTrigger>
                   <SelectValue placeholder="Select shape" />
                 </SelectTrigger>
@@ -1051,7 +1199,10 @@ function renderPropertiesForm(
 
             <div>
               <Label htmlFor="textAlign">Alignment</Label>
-              <Select value={props.textAlign || "center"} onValueChange={(value) => onChange("textAlign", value)}>
+              <Select
+                value={props.textAlign || "center"}
+                onValueChange={(value) => onChange("textAlign", value)}
+              >
                 <SelectTrigger>
                   <SelectValue placeholder="Select alignment" />
                 </SelectTrigger>
@@ -1067,7 +1218,10 @@ function renderPropertiesForm(
           <TabsContent value="position" className="space-y-4">
             <div>
               <Label htmlFor="position">Position</Label>
-              <Select value={props.position || "static"} onValueChange={(value) => onChange("position", value)}>
+              <Select
+                value={props.position || "static"}
+                onValueChange={(value) => onChange("position", value)}
+              >
                 <SelectTrigger>
                   <SelectValue placeholder="Select position" />
                 </SelectTrigger>
@@ -1132,7 +1286,7 @@ function renderPropertiesForm(
             )}
           </TabsContent>
         </Tabs>
-      )
+      );
 
     case "unsubscribe":
       return (
@@ -1194,7 +1348,10 @@ function renderPropertiesForm(
 
           <div>
             <Label htmlFor="textAlign">Text Align</Label>
-            <Select value={props.textAlign} onValueChange={(value) => onChange("textAlign", value)}>
+            <Select
+              value={props.textAlign}
+              onValueChange={(value) => onChange("textAlign", value)}
+            >
               <SelectTrigger>
                 <SelectValue placeholder="Select alignment" />
               </SelectTrigger>
@@ -1221,32 +1378,32 @@ function renderPropertiesForm(
 
           {positionControls}
         </div>
-      )
+      );
 
     default:
-      return null
+      return null;
   }
 }
 
 function getSocialIcon(platform: SocialPlatform) {
   switch (platform) {
     case "facebook":
-      return <Facebook size={16} />
+      return <Facebook size={16} />;
     case "twitter":
-      return <Twitter size={16} />
+      return <Twitter size={16} />;
     case "instagram":
-      return <Instagram size={16} />
+      return <Instagram size={16} />;
     case "linkedin":
-      return <Linkedin size={16} />
+      return <Linkedin size={16} />;
     case "youtube":
-      return <Youtube size={16} />
+      return <Youtube size={16} />;
     case "github":
-      return <Github size={16} />
+      return <Github size={16} />;
     default:
-      return null
+      return null;
   }
 }
 
 function capitalizeFirstLetter(string: string) {
-  return string.charAt(0).toUpperCase() + string.slice(1)
+  return string.charAt(0).toUpperCase() + string.slice(1);
 }

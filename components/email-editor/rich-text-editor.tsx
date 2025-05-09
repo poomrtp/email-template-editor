@@ -1,35 +1,41 @@
-"use client"
+"use client";
 
-import { useEffect, useState } from "react"
-import { EditorContent, useEditor } from "@tiptap/react"
-import StarterKit from "@tiptap/starter-kit"
-import { Color } from "@tiptap/extension-color"
-import TextStyle from "@tiptap/extension-text-style"
-import TextAlign from "@tiptap/extension-text-align"
-import Link from "@tiptap/extension-link"
-import FontFamily from "@tiptap/extension-font-family"
-import Underline from "@tiptap/extension-underline"
 import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Color } from "@tiptap/extension-color";
+import FontFamily from "@tiptap/extension-font-family";
+import Link from "@tiptap/extension-link";
+import TextAlign from "@tiptap/extension-text-align";
+import TextStyle from "@tiptap/extension-text-style";
+import Underline from "@tiptap/extension-underline";
+import { EditorContent, useEditor } from "@tiptap/react";
+import StarterKit from "@tiptap/starter-kit";
+import {
+  AlignCenter,
+  AlignJustify,
+  AlignLeft,
+  AlignRight,
   Bold,
   Italic,
-  UnderlineIcon,
-  AlignLeft,
-  AlignCenter,
-  AlignRight,
-  AlignJustify,
   LinkIcon,
-  Unlink,
   Type,
-} from "lucide-react"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+  UnderlineIcon,
+  Unlink,
+} from "lucide-react";
+import { memo, useEffect, useState } from "react";
 
 interface RichTextEditorProps {
-  content: string
-  onChange: (html: string) => void
-  textColor: string
-  fontSize: number
-  textAlign: string
-  fontFamily?: string
+  content: string;
+  onChange: (html: string) => void;
+  textColor: string;
+  fontSize: number;
+  textAlign: string;
+  fontFamily?: string;
 }
 
 const fontFamilies = [
@@ -41,7 +47,7 @@ const fontFamilies = [
   { value: "Verdana, sans-serif", label: "Verdana" },
   { value: "Tahoma, sans-serif", label: "Tahoma" },
   { value: "Trebuchet MS, sans-serif", label: "Trebuchet MS" },
-]
+];
 
 const fontSizes = [
   { value: 8, label: "8px" },
@@ -57,9 +63,9 @@ const fontSizes = [
   { value: 48, label: "48px" },
   { value: 60, label: "60px" },
   { value: 72, label: "72px" },
-]
+];
 
-export default function RichTextEditor({
+export default memo(function RichTextEditor({
   content,
   onChange,
   textColor,
@@ -67,7 +73,7 @@ export default function RichTextEditor({
   textAlign,
   fontFamily = "Arial, sans-serif",
 }: RichTextEditorProps) {
-  const [editorContent, setEditorContent] = useState(content)
+  const [editorContent, setEditorContent] = useState(content);
 
   const editor = useEditor({
     extensions: [
@@ -86,39 +92,47 @@ export default function RichTextEditor({
     ],
     content: editorContent,
     onUpdate: ({ editor }) => {
-      const html = editor.getHTML()
-      setEditorContent(html)
-      onChange(html)
+      const html = editor.getHTML();
+      setEditorContent(html);
+      onChange(html);
     },
-  })
+  });
 
   // Update editor when props change
   useEffect(() => {
     if (editor) {
       // Only update if the content is different to avoid cursor jumping
       if (content !== editorContent && !editor.isFocused) {
-        editor.commands.setContent(content)
-        setEditorContent(content)
+        editor.commands.setContent(content);
+        setEditorContent(content);
       }
 
       // Only apply global styles if there's no selection
       if (editor.state.selection.empty) {
-        editor.chain().focus().setTextAlign(textAlign).run()
-        editor.chain().focus().setColor(textColor).run()
-        editor.chain().focus().setFontFamily(fontFamily).run()
+        editor.chain().focus().setTextAlign(textAlign).run();
+        editor.chain().focus().setColor(textColor).run();
+        editor.chain().focus().setFontFamily(fontFamily).run();
 
         // Instead of using setFontSize, we'll use TextStyle with inline style
         editor
           .chain()
           .focus()
           .setMark("textStyle", { fontSize: `${fontSize}px` })
-          .run()
+          .run();
       }
     }
-  }, [editor, content, textColor, textAlign, fontFamily, fontSize, editorContent])
+  }, [
+    editor,
+    content,
+    textColor,
+    textAlign,
+    fontFamily,
+    fontSize,
+    editorContent,
+  ]);
 
   if (!editor) {
-    return null
+    return null;
   }
 
   // Apply style to selected text only
@@ -126,20 +140,24 @@ export default function RichTextEditor({
     if (!editor.state.selection.empty) {
       switch (style) {
         case "color":
-          editor.chain().focus().setColor(value).run()
-          break
+          editor.chain().focus().setColor(value).run();
+          break;
         case "fontFamily":
-          editor.chain().focus().setFontFamily(value).run()
-          break
+          editor.chain().focus().setFontFamily(value).run();
+          break;
         case "fontSize":
           // Use TextStyle mark with inline style for font size
-          editor.chain().focus().setMark("textStyle", { fontSize: value }).run()
-          break
+          editor
+            .chain()
+            .focus()
+            .setMark("textStyle", { fontSize: value })
+            .run();
+          break;
       }
       // Trigger onChange to update the content
-      onChange(editor.getHTML())
+      onChange(editor.getHTML());
     }
-  }
+  };
 
   return (
     <div className="rich-text-editor">
@@ -147,7 +165,9 @@ export default function RichTextEditor({
         <div className="flex flex-wrap items-center gap-1 p-2 border-b border-gray-200 bg-gray-50">
           <button
             onClick={() => editor.chain().focus().toggleBold().run()}
-            className={`p-1 rounded hover:bg-gray-200 ${editor.isActive("bold") ? "bg-gray-200" : ""}`}
+            className={`p-1 rounded hover:bg-gray-200 ${
+              editor.isActive("bold") ? "bg-gray-200" : ""
+            }`}
             title="Bold"
             type="button"
           >
@@ -155,7 +175,9 @@ export default function RichTextEditor({
           </button>
           <button
             onClick={() => editor.chain().focus().toggleItalic().run()}
-            className={`p-1 rounded hover:bg-gray-200 ${editor.isActive("italic") ? "bg-gray-200" : ""}`}
+            className={`p-1 rounded hover:bg-gray-200 ${
+              editor.isActive("italic") ? "bg-gray-200" : ""
+            }`}
             title="Italic"
             type="button"
           >
@@ -163,7 +185,9 @@ export default function RichTextEditor({
           </button>
           <button
             onClick={() => editor.chain().focus().toggleUnderline().run()}
-            className={`p-1 rounded hover:bg-gray-200 ${editor.isActive("underline") ? "bg-gray-200" : ""}`}
+            className={`p-1 rounded hover:bg-gray-200 ${
+              editor.isActive("underline") ? "bg-gray-200" : ""
+            }`}
             title="Underline"
             type="button"
           >
@@ -174,7 +198,9 @@ export default function RichTextEditor({
 
           <button
             onClick={() => editor.chain().focus().setTextAlign("left").run()}
-            className={`p-1 rounded hover:bg-gray-200 ${editor.isActive({ textAlign: "left" }) ? "bg-gray-200" : ""}`}
+            className={`p-1 rounded hover:bg-gray-200 ${
+              editor.isActive({ textAlign: "left" }) ? "bg-gray-200" : ""
+            }`}
             title="Align left"
             type="button"
           >
@@ -182,7 +208,9 @@ export default function RichTextEditor({
           </button>
           <button
             onClick={() => editor.chain().focus().setTextAlign("center").run()}
-            className={`p-1 rounded hover:bg-gray-200 ${editor.isActive({ textAlign: "center" }) ? "bg-gray-200" : ""}`}
+            className={`p-1 rounded hover:bg-gray-200 ${
+              editor.isActive({ textAlign: "center" }) ? "bg-gray-200" : ""
+            }`}
             title="Align center"
             type="button"
           >
@@ -190,7 +218,9 @@ export default function RichTextEditor({
           </button>
           <button
             onClick={() => editor.chain().focus().setTextAlign("right").run()}
-            className={`p-1 rounded hover:bg-gray-200 ${editor.isActive({ textAlign: "right" }) ? "bg-gray-200" : ""}`}
+            className={`p-1 rounded hover:bg-gray-200 ${
+              editor.isActive({ textAlign: "right" }) ? "bg-gray-200" : ""
+            }`}
             title="Align right"
             type="button"
           >
@@ -211,12 +241,14 @@ export default function RichTextEditor({
 
           <button
             onClick={() => {
-              const url = window.prompt("URL")
+              const url = window.prompt("URL");
               if (url) {
-                editor.chain().focus().setLink({ href: url }).run()
+                editor.chain().focus().setLink({ href: url }).run();
               }
             }}
-            className={`p-1 rounded hover:bg-gray-200 ${editor.isActive("link") ? "bg-gray-200" : ""}`}
+            className={`p-1 rounded hover:bg-gray-200 ${
+              editor.isActive("link") ? "bg-gray-200" : ""
+            }`}
             title="Add link"
             type="button"
           >
@@ -241,11 +273,11 @@ export default function RichTextEditor({
               onValueChange={(value) => {
                 if (!editor.state.selection.empty) {
                   // Apply to selection only
-                  applyStyleToSelection("fontFamily", value)
+                  applyStyleToSelection("fontFamily", value);
                 } else {
                   // Apply to all content
-                  editor.chain().focus().setFontFamily(value).run()
-                  onChange(editor.getHTML())
+                  editor.chain().focus().setFontFamily(value).run();
+                  onChange(editor.getHTML());
                 }
               }}
             >
@@ -266,18 +298,18 @@ export default function RichTextEditor({
             <Select
               value={fontSize.toString()}
               onValueChange={(value) => {
-                const size = Number.parseInt(value)
+                const size = Number.parseInt(value);
                 if (!editor.state.selection.empty) {
                   // Apply to selection only
-                  applyStyleToSelection("fontSize", `${size}px`)
+                  applyStyleToSelection("fontSize", `${size}px`);
                 } else {
                   // Apply to all content
                   editor
                     .chain()
                     .focus()
                     .setMark("textStyle", { fontSize: `${size}px` })
-                    .run()
-                  onChange(editor.getHTML())
+                    .run();
+                  onChange(editor.getHTML());
                 }
               }}
             >
@@ -299,14 +331,14 @@ export default function RichTextEditor({
               type="color"
               value={textColor}
               onChange={(e) => {
-                const color = e.target.value
+                const color = e.target.value;
                 if (!editor.state.selection.empty) {
                   // Apply to selection only
-                  applyStyleToSelection("color", color)
+                  applyStyleToSelection("color", color);
                 } else {
                   // Apply to all content
-                  editor.chain().focus().setColor(color).run()
-                  onChange(editor.getHTML())
+                  editor.chain().focus().setColor(color).run();
+                  onChange(editor.getHTML());
                 }
               }}
               className="w-8 h-8 p-1 border rounded"
@@ -319,5 +351,5 @@ export default function RichTextEditor({
         </div>
       </div>
     </div>
-  )
-}
+  );
+});

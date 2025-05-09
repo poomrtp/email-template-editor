@@ -1,21 +1,35 @@
-"use client"
+"use client";
 
-import type React from "react"
-import { useDrop } from "react-dnd"
-import { useEditor } from "./editor-context"
-import type { EmailComponent, SocialLink } from "./types"
-import { Trash2, GripVertical, Copy, ChevronUp, ChevronDown } from "lucide-react"
-import { useDrag } from "react-dnd"
-import { useRef, useState, useEffect } from "react"
-import { getSocialIcon } from "./utils/social-icons"
-import { useMobile } from "@/hooks/use-mobile"
+import { useMobile } from "@/hooks/use-mobile";
+import {
+  ChevronDown,
+  ChevronUp,
+  Copy,
+  GripVertical,
+  Trash2,
+} from "lucide-react";
+import type React from "react";
+import { JSX, useEffect, useRef, useState } from "react";
+import { useDrag, useDrop } from "react-dnd";
+import { useEditor } from "./editor-context";
+import type { EmailComponent, SocialLink } from "./types";
+import { getSocialIcon } from "./utils/social-icons";
 
 export default function Canvas() {
-  const { template, addComponent } = useEditor()
-  const [canvasHeight, setCanvasHeight] = useState<number | null>(null)
-  const canvasRef = useRef<HTMLDivElement>(null)
-  const contentRef = useRef<HTMLDivElement>(null)
-  const isMobile = useMobile()
+  const { template, addComponent, selectComponent, findComponentById } =
+    useEditor();
+  const [canvasHeight, setCanvasHeight] = useState<number | null>(null);
+  const canvasRef = useRef<HTMLDivElement>(null);
+  const contentRef = useRef<HTMLDivElement>(null);
+  const isMobile = useMobile();
+
+  // Add click handler for canvas
+  const handleCanvasClick = (e: React.MouseEvent) => {
+    // Only clear selection if clicking directly on the canvas
+    if (e.target === canvasRef.current) {
+      selectComponent(null);
+    }
+  };
 
   const [{ isOver }, drop] = useDrop({
     accept: ["COMPONENT", "REORDER_COMPONENT"],
@@ -23,46 +37,46 @@ export default function Canvas() {
       // Only add component if it's dropped directly on the canvas
       // and it's a new component (not a reordering)
       if (monitor.isOver({ shallow: true }) && item.type) {
-        addComponent(item.type)
-        return { handled: true }
+        addComponent(item.type);
+        return { handled: true };
       }
     },
     collect: (monitor) => ({
       isOver: !!monitor.isOver({ shallow: true }),
     }),
-  })
+  });
 
   // Combine refs
   const setRefs = (element: HTMLDivElement | null) => {
-    canvasRef.current = element
-    drop(element)
-  }
+    canvasRef.current = element;
+    drop(element);
+  };
 
   // Update canvas height based on content
   useEffect(() => {
     const updateCanvasHeight = () => {
       if (contentRef.current) {
-        const contentHeight = contentRef.current.scrollHeight
-        setCanvasHeight(Math.max(contentHeight, 800)) // Minimum height of 800px
+        const contentHeight = contentRef.current.scrollHeight;
+        setCanvasHeight(Math.max(contentHeight, 400));
       }
-    }
+    };
 
     // Initial update
-    updateCanvasHeight()
+    updateCanvasHeight();
 
     // Set up resize observer to detect content changes
     const resizeObserver = new ResizeObserver(() => {
-      updateCanvasHeight()
-    })
+      updateCanvasHeight();
+    });
 
     if (contentRef.current) {
-      resizeObserver.observe(contentRef.current)
+      resizeObserver.observe(contentRef.current);
     }
 
     // Set up mutation observer to detect DOM changes
     const mutationObserver = new MutationObserver(() => {
-      updateCanvasHeight()
-    })
+      updateCanvasHeight();
+    });
 
     if (contentRef.current) {
       mutationObserver.observe(contentRef.current, {
@@ -70,64 +84,86 @@ export default function Canvas() {
         subtree: true,
         attributes: true,
         characterData: true,
-      })
+      });
     }
 
     // Clean up
     return () => {
-      resizeObserver.disconnect()
-      mutationObserver.disconnect()
-    }
-  }, [template.components])
+      resizeObserver.disconnect();
+      mutationObserver.disconnect();
+    };
+  }, [template.components]);
 
   // Calculate canvas width based on screen size
   const getCanvasWidth = () => {
     if (isMobile) {
-      return "100%"
+      return "100%";
     } else {
-      return "600px" // Default email width
+      return "600px"; // Default email width
     }
-  }
+  };
 
   return (
     <div className="flex-1 p-2 sm:p-6 overflow-y-auto bg-gray-100 flex justify-center">
       <div
-        ref={setRefs}
-        className={`bg-white shadow-md transition-all duration-300 overflow-hidden ${isOver ? "ring-2 ring-[#3B82F6]" : ""}`}
+        ref={(el) => {
+          setRefs(el);
+          canvasRef.current = el;
+        }}
+        className={`bg-white shadow-md transition-all duration-300 overflow-hidden ${
+          isOver ? "ring-2 ring-[#3B82F6]" : ""
+        }`}
         style={{
           width: getCanvasWidth(),
           height: canvasHeight ? `${canvasHeight}px` : "auto",
-          minHeight: "800px",
+          minHeight: "400px",
           maxWidth: "100%",
           position: "relative", // Added for absolute positioning of children
         }}
+        onClick={handleCanvasClick}
       >
         {template.components.length === 0 ? (
           <div className="h-full flex items-center justify-center text-gray-400 border-2 border-dashed border-gray-200 rounded-md">
             <div className="text-center p-6">
               <p className="mb-2">Drag and drop components here</p>
-              <p className="text-sm">or click on a component in the left panel</p>
+              <p className="text-sm">
+                or click on a component in the left panel
+              </p>
             </div>
           </div>
         ) : (
           <div ref={contentRef} className="p-4">
             {template.components.map((component, index) => (
-              <ComponentRenderer key={component.id} component={component} index={index} parentId={undefined} />
+              <ComponentRenderer
+                key={component.id}
+                component={component}
+                index={index}
+                parentId={undefined}
+              />
             ))}
           </div>
         )}
       </div>
     </div>
-  )
+  );
 }
 
 interface ComponentRendererProps {
-  component: EmailComponent
-  index: number
-  parentId?: string
+  component: EmailComponent;
+  index: number;
+  parentId?: string;
 }
 
-function ComponentRenderer({ component, index, parentId }: ComponentRendererProps) {
+// Add type guard for EmailComponent
+function isEmailComponent(value: any): value is EmailComponent {
+  return value && typeof value === "object" && "id" in value && "type" in value;
+}
+
+function ComponentRenderer({
+  component,
+  index,
+  parentId,
+}: ComponentRendererProps) {
   const {
     selectedComponentId,
     selectComponent,
@@ -136,42 +172,43 @@ function ComponentRenderer({ component, index, parentId }: ComponentRendererProp
     addComponent,
     duplicateComponent,
     template,
-  } = useEditor()
-  const [showControls, setShowControls] = useState(false)
+    findComponentById,
+  } = useEditor();
+  const [showControls, setShowControls] = useState(false);
 
-  const isSelected = selectedComponentId === component.id
+  const isSelected = selectedComponentId === component.id;
 
   const handleClick = (e: React.MouseEvent) => {
-    e.stopPropagation()
-    selectComponent(component.id)
-  }
+    e.stopPropagation(); // Prevent click from bubbling to canvas
+    selectComponent(component.id);
+  };
 
   const handleDelete = (e: React.MouseEvent) => {
-    e.stopPropagation()
-    removeComponent(component.id)
-  }
+    e.stopPropagation();
+    removeComponent(component.id);
+  };
 
   const handleDuplicate = (e: React.MouseEvent) => {
-    e.stopPropagation()
-    duplicateComponent(component.id)
-  }
+    e.stopPropagation();
+    duplicateComponent(component.id);
+  };
 
   const handleMoveUp = (e: React.MouseEvent) => {
-    e.stopPropagation()
+    e.stopPropagation();
     if (index > 0) {
-      moveComponent(component.id, index - 1, parentId)
+      moveComponent(component.id, index - 1, parentId);
     }
-  }
+  };
 
   const handleMoveDown = (e: React.MouseEvent) => {
-    e.stopPropagation()
+    e.stopPropagation();
     // We don't know the total number of siblings here, so we move to the current index + 1
     // The context will handle boundary checks
-    moveComponent(component.id, index + 1, parentId)
-  }
+    moveComponent(component.id, index + 1, parentId);
+  };
 
   // For drag and drop reordering
-  const ref = useRef<HTMLDivElement>(null)
+  const ref = useRef<HTMLDivElement>(null);
 
   const [{ isDragging }, drag, preview] = useDrag({
     type: "REORDER_COMPONENT",
@@ -179,37 +216,40 @@ function ComponentRenderer({ component, index, parentId }: ComponentRendererProp
     collect: (monitor) => ({
       isDragging: !!monitor.isDragging(),
     }),
-  })
+  });
 
   const [{ isOver, canDrop }, drop] = useDrop({
     accept: ["COMPONENT", "REORDER_COMPONENT"],
     hover(item: any, monitor) {
-      if (!ref.current) {
-        return
-      }
+      if (!ref.current) return;
 
       // Don't replace items with themselves
-      if (item.id === component.id) {
-        return
+      if (item.id === component.id) return;
+
+      // Always allow reordering among siblings
+      if (
+        item.type === undefined &&
+        item.id &&
+        item.parentId === parentId &&
+        item.index !== index
+      ) {
+        moveComponent(item.id, index, parentId);
+        item.index = index;
+        return;
       }
 
-      // Handle reordering
+      // Existing logic for reordering among siblings
       if (item.type === undefined && item.id) {
-        // This is a reordering operation
         if (item.parentId === parentId) {
-          const dragIndex = item.index
-          const hoverIndex = index
-
-          // Don't replace items with themselves
-          if (dragIndex === hoverIndex) {
-            return
-          }
-
-          // Move the component
-          moveComponent(item.id, hoverIndex, parentId)
-
-          // Update the index for the dragged item
-          item.index = hoverIndex
+          const dragIndex = item.index;
+          const hoverIndex = index;
+          if (dragIndex === hoverIndex) return;
+          moveComponent(item.id, hoverIndex, parentId);
+          item.index = hoverIndex;
+        } else if (["container", "columns"].includes(component.type)) {
+          moveComponent(item.id, component.children?.length ?? 0, component.id);
+          item.parentId = component.id;
+          item.index = (component.children?.length ?? 1) - 1;
         }
       }
     },
@@ -219,39 +259,50 @@ function ComponentRenderer({ component, index, parentId }: ComponentRendererProp
         // This is a new component being added
         if (item.type) {
           if (["container", "columns"].includes(component.type)) {
-            addComponent(item.type, component.id)
-            return { handled: true }
+            addComponent(item.type, component.id);
+            return { handled: true };
           }
         } else if (item.id && item.parentId !== parentId) {
           // This is a component being moved from another parent
-          moveComponent(item.id, index, parentId)
-          return { handled: true }
+          // If this component is a container/columns, move as last child
+          if (["container", "columns"].includes(component.type)) {
+            moveComponent(
+              item.id,
+              component.children?.length ?? 0,
+              component.id
+            );
+            return { handled: true };
+          } else {
+            // Move to this index in the current parent
+            moveComponent(item.id, index, parentId);
+            return { handled: true };
+          }
         }
       }
     },
     canDrop: (item: any) => {
       // Allow dropping new components only in containers or columns
       if (item.type) {
-        return ["container", "columns"].includes(component.type)
+        return ["container", "columns"].includes(component.type);
       }
       // Allow dropping existing components anywhere
-      return true
+      return true;
     },
     collect: (monitor) => ({
       isOver: !!monitor.isOver({ shallow: true }),
       canDrop: !!monitor.canDrop(),
     }),
-  })
+  });
 
   // Connect the drag preview to the component
-  preview(drop(ref))
+  preview(drop(ref));
 
   // Determine if the component has absolute positioning
-  const isAbsolutePositioned = component.props.position === "absolute"
+  const isAbsolutePositioned = component.props.position === "absolute";
 
   // Render the component based on its type
   const renderComponent = () => {
-    const { type, props, children } = component
+    const { type, props, children } = component;
 
     switch (type) {
       case "text":
@@ -291,10 +342,12 @@ function ComponentRenderer({ component, index, parentId }: ComponentRendererProp
               </div>
             )}
           </div>
-        )
+        );
 
       case "header":
-        const HeaderTag = `h${props.headerLevel || 2}` as keyof JSX.IntrinsicElements
+        const HeaderTag = `h${
+          props.headerLevel || 2
+        }` as keyof JSX.IntrinsicElements;
         return (
           <div
             style={{
@@ -332,7 +385,7 @@ function ComponentRenderer({ component, index, parentId }: ComponentRendererProp
               </HeaderTag>
             )}
           </div>
-        )
+        );
 
       case "image":
         return (
@@ -357,7 +410,7 @@ function ComponentRenderer({ component, index, parentId }: ComponentRendererProp
               }}
             />
           </div>
-        )
+        );
 
       case "button":
         return (
@@ -387,11 +440,14 @@ function ComponentRenderer({ component, index, parentId }: ComponentRendererProp
               {props.text}
             </button>
           </div>
-        )
+        );
 
       case "container":
         return (
           <div
+            ref={(node) => {
+              drop(node);
+            }}
             style={{
               backgroundColor: props.backgroundColor,
               padding: `${props.padding}px`,
@@ -404,11 +460,21 @@ function ComponentRenderer({ component, index, parentId }: ComponentRendererProp
               bottom: props.bottom,
               zIndex: props.zIndex,
             }}
-            className={`${canDrop && isOver ? "bg-opacity-50 ring-2 ring-green-400" : ""}`}
+            className={`${
+              canDrop && isOver ? "bg-opacity-50 ring-2 ring-green-400" : ""
+            }`}
           >
-            {children?.map((child, childIndex) => (
-              <ComponentRenderer key={child.id} component={child} index={childIndex} parentId={component.id} />
-            ))}
+            {children?.map((child, childIndex) => {
+              if (!isEmailComponent(child)) return null;
+              return (
+                <ComponentRenderer
+                  key={child.id}
+                  component={child}
+                  index={childIndex}
+                  parentId={component.id}
+                />
+              );
+            })}
 
             {children?.length === 0 && (
               <div className="h-20 flex items-center justify-center text-gray-400 border-2 border-dashed border-gray-200 rounded-md">
@@ -416,7 +482,7 @@ function ComponentRenderer({ component, index, parentId }: ComponentRendererProp
               </div>
             )}
           </div>
-        )
+        );
 
       case "divider":
         return (
@@ -432,21 +498,25 @@ function ComponentRenderer({ component, index, parentId }: ComponentRendererProp
               zIndex: props.zIndex,
             }}
           />
-        )
+        );
 
       case "columns":
         // Calculate the actual width for each column, taking into account the gap
-        const totalGap = (props.columnGap || 0) * (props.columns - 1)
-        const availableWidth = 100 - totalGap / props.columns
-        const columnWidth = availableWidth / props.columns
+        const columns = props.columns || 2; // Default to 2 columns if undefined
+        const totalGap = (props.columnGap || 0) * (columns - 1);
+        const availableWidth = 100 - totalGap / columns;
+        const columnWidth = availableWidth / columns;
 
         // Create appropriate class for columns container based on stackOnMobile
         const columnsContainerClass = props.stackOnMobile
           ? "flex flex-col sm:flex-row sm:flex-nowrap" // Stack on mobile, row on larger screens
-          : "flex flex-row flex-nowrap" // Always row (never wrap)
+          : "flex flex-row flex-nowrap"; // Always row (never wrap)
 
         return (
           <div
+            ref={(node) => {
+              drop(node);
+            }}
             style={{
               backgroundColor: props.backgroundColor,
               padding: `${props.padding}px`,
@@ -457,7 +527,9 @@ function ComponentRenderer({ component, index, parentId }: ComponentRendererProp
               bottom: props.bottom,
               zIndex: props.zIndex,
             }}
-            className={`${canDrop && isOver ? "bg-opacity-50 ring-2 ring-green-400" : ""}`}
+            className={`${
+              canDrop && isOver ? "bg-opacity-50 ring-2 ring-green-400" : ""
+            }`}
           >
             <div
               className={columnsContainerClass}
@@ -467,38 +539,46 @@ function ComponentRenderer({ component, index, parentId }: ComponentRendererProp
                 width: "100%",
               }}
             >
-              {Array.from({ length: props.columns || 2 }).map((_, colIndex) => {
-                const columnChild = children?.find((_, i) => i === colIndex)
+              {Array.from({ length: columns }).map((_, colIndex) => {
+                const columnChild = children?.find((_, i) => i === colIndex);
 
                 // Calculate the correct percentage width
-                const colWidth = `${columnWidth}%`
+                const colWidth = `${columnWidth}%`;
 
                 return (
                   <div
                     key={colIndex}
-                    className={`${props.stackOnMobile ? "w-full sm:w-auto" : ""} overflow-hidden`}
+                    className={`${
+                      props.stackOnMobile ? "w-full sm:w-auto" : ""
+                    } overflow-hidden`}
                     style={{
-                      flex: props.stackOnMobile ? "1 1 100%" : `0 0 ${colWidth}`,
+                      flex: props.stackOnMobile
+                        ? "1 1 100%"
+                        : `0 0 ${colWidth}`,
                       maxWidth: props.stackOnMobile ? "100%" : colWidth,
                       minWidth: 0, // Prevent overflow
-                      ...(colIndex < props.columns - 1 && {
+                      ...(colIndex < columns - 1 && {
                         marginRight: `${props.columnGap}px`,
                       }), // Add gap as margin-right except for last column
                     }}
                   >
-                    {columnChild ? (
-                      <ComponentRenderer component={columnChild} index={colIndex} parentId={component.id} />
+                    {columnChild && isEmailComponent(columnChild) ? (
+                      <ComponentRenderer
+                        component={columnChild}
+                        index={colIndex}
+                        parentId={component.id}
+                      />
                     ) : (
                       <div className="h-full min-h-[50px] flex items-center justify-center text-gray-400 border-2 border-dashed border-gray-200 rounded-md">
                         <p className="text-sm">Drop component here</p>
                       </div>
                     )}
                   </div>
-                )
+                );
               })}
             </div>
           </div>
-        )
+        );
 
       case "spacer":
         return (
@@ -513,7 +593,7 @@ function ComponentRenderer({ component, index, parentId }: ComponentRendererProp
               zIndex: props.zIndex,
             }}
           />
-        )
+        );
 
       case "social":
         return (
@@ -537,10 +617,14 @@ function ComponentRenderer({ component, index, parentId }: ComponentRendererProp
                       key={i}
                       style={{
                         backgroundColor: props.socialBackgroundColor,
-                        width: `${props.socialSize}px`,
-                        height: `${props.socialSize}px`,
+                        width: `${props.socialSize || 32}px`,
+                        height: `${props.socialSize || 32}px`,
                         borderRadius:
-                          props.socialShape === "circle" ? "50%" : props.socialShape === "rounded" ? "8px" : "0",
+                          props.socialShape === "circle"
+                            ? "50%"
+                            : props.socialShape === "rounded"
+                            ? "8px"
+                            : "0",
                         display: "flex",
                         alignItems: "center",
                         justifyContent: "center",
@@ -549,15 +633,19 @@ function ComponentRenderer({ component, index, parentId }: ComponentRendererProp
                     >
                       <div
                         dangerouslySetInnerHTML={{
-                          __html: getSocialIcon(link.platform, props.socialColor, Math.floor(props.socialSize * 0.6)),
+                          __html: getSocialIcon(
+                            link.platform,
+                            props.socialColor || "#000000",
+                            Math.floor((props.socialSize || 32) * 0.6)
+                          ),
                         }}
                       />
                     </div>
-                  ),
+                  )
               )}
             </div>
           </div>
-        )
+        );
 
       case "unsubscribe":
         return (
@@ -584,12 +672,12 @@ function ComponentRenderer({ component, index, parentId }: ComponentRendererProp
               {props.unsubscribeText || "Unsubscribe from this list"}
             </a>
           </div>
-        )
+        );
 
       default:
-        return <div>Unknown component type: {type}</div>
+        return <div>Unknown component type: {type}</div>;
     }
-  }
+  };
 
   // Calculate control position based on component position
   const getControlsPosition = () => {
@@ -598,16 +686,16 @@ function ComponentRenderer({ component, index, parentId }: ComponentRendererProp
         position: "absolute",
         top: "-24px",
         right: "0",
-        zIndex: 100,
-      } as React.CSSProperties
+        zIndex: 10,
+      } as React.CSSProperties;
     }
     return {
       position: "absolute",
       top: "-3px",
       right: "-3px",
-      zIndex: 100,
-    } as React.CSSProperties
-  }
+      zIndex: 10,
+    } as React.CSSProperties;
+  };
 
   const getDragHandlePosition = () => {
     if (isAbsolutePositioned) {
@@ -617,22 +705,24 @@ function ComponentRenderer({ component, index, parentId }: ComponentRendererProp
         top: "-24px",
         transform: "none",
         zIndex: 100,
-      } as React.CSSProperties
+      } as React.CSSProperties;
     }
     return {
       position: "absolute",
       left: "-3px",
       top: "50%",
       transform: "translateY(-50%)",
-    } as React.CSSProperties
-  }
+    } as React.CSSProperties;
+  };
 
   return (
     <div
       ref={ref}
       className={`relative mb-2 ${isSelected ? "ring-2 ring-[#3B82F6]" : ""} ${
         showControls && !isSelected ? "ring-1 ring-gray-300" : ""
-      } ${isDragging ? "opacity-50" : ""} ${isOver && canDrop ? "ring-2 ring-green-400" : ""}`}
+      } ${isDragging ? "opacity-50" : ""} ${
+        isOver && canDrop ? "ring-2 ring-green-400" : ""
+      }`}
       onClick={handleClick}
       onMouseEnter={() => setShowControls(true)}
       onMouseLeave={() => setShowControls(false)}
@@ -674,8 +764,17 @@ function ComponentRenderer({ component, index, parentId }: ComponentRendererProp
       )}
 
       <div
-        ref={drag}
-        className={`cursor-move ${isSelected || showControls ? "visible" : "invisible"}`}
+        ref={(node) => {
+          if (node) {
+            drag(node);
+            if (ref) {
+              (ref as React.RefObject<HTMLDivElement | null>).current = node;
+            }
+          }
+        }}
+        className={`cursor-move ${
+          isSelected || showControls ? "visible" : "invisible"
+        }`}
         style={getDragHandlePosition()}
       >
         <GripVertical size={16} className="text-gray-400" />
@@ -683,5 +782,5 @@ function ComponentRenderer({ component, index, parentId }: ComponentRendererProp
 
       {renderComponent()}
     </div>
-  )
+  );
 }
